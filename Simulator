@@ -1,0 +1,85 @@
+import java.util.Scanner;
+
+/**
+ * A simulator for two different grocery store checkout policies:
+ * - a single queue that feeds to all checkouts
+ * - one queue for each checkout
+ *
+ */
+public class Simulator {
+	
+	// number of seconds in a simulator time step
+	public static final int ITEM_TIME = 10;
+
+	public static void main(String[] args) {
+		int numLines, maxItems, numCustomers;
+		double customerChance;
+
+		try (Scanner s = new Scanner(System.in)) {
+
+			System.out.print("Enter number of lines (2 or greater): ");
+			numLines = s.nextInt();
+
+			System.out.print("Enter max number of items (2 or greater): ");
+			maxItems = s.nextInt();
+
+			System.out.print("Enter number of customers to queue (2 or greater): ");
+			numCustomers = s.nextInt();
+
+
+			System.out.print("Enter % chance of a customer getting in a line (1-100): ");
+			customerChance = s.nextInt() / 100.0;
+
+		}
+
+		if ((numLines < 2) || (maxItems < 2) || (numCustomers < 2) ||
+				(customerChance < 0) || (customerChance > 100)) {
+			System.err.println("Invalid input parameters. Quitting.");
+			System.exit(1);
+		}
+
+		GroceryLine sing = new SingleLine(numLines);
+		GroceryLine mult = new MultiLine(numLines);
+		int temp = 0;
+		
+		while(sing.getStats().totalPeople < numCustomers ||
+				mult.getStats().totalPeople < numCustomers) {
+			if (Math.random() < customerChance && temp < numCustomers) {
+				int ranItems = (int) (Math.random() * (maxItems - 1) + 2);
+				sing.arrive(new Customer(ranItems));
+				mult.arrive(new Customer(ranItems));
+				temp++;
+			}
+			
+			if (sing.getStats().totalPeople < numCustomers) 
+				sing.step();
+
+			if (mult.getStats().totalPeople < numCustomers) 
+				mult.step();
+				
+		}
+
+		Stats sstats = sing.getStats();
+		Stats mstats = mult.getStats();
+
+		printStats(sstats, "single line");
+		printStats(mstats, "multi line");
+	}
+
+	/**
+	 * Print detailed statistics of simulation
+	 * @param s statistics to print
+	 * @param lineName description of queue policy
+	 */
+	private static void printStats(Stats s, String lineName) {
+
+		double avgWaitTime = (double) s.totalTime / (double) s.totalPeople;
+		int maxQueueLength = s.maxLine;
+		double custPerHour = (double) s.totalPeople / ((double) s.elapsedTime / 3600.0);
+
+		// TODO: Calculate statistics
+
+		System.out.printf("\nStatistics for %s:\nAverage wait time: %f\nMaximum queue length: %d\nCustomers per hour: %f\n",
+				lineName, avgWaitTime, maxQueueLength, custPerHour);
+	}
+}
