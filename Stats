@@ -1,0 +1,17 @@
+/**
+ * Statistics object that holds all relevant information about a specific GroceryLine simulation
+ *
+ */
+public class Stats {
+
+	public int totalPeople = 0; // count of people who have completed checkout
+	public int totalTime = 0;	// total wait time of all people who have completed checkout
+	public int maxLine = 0;		// maximum queue length so far
+	public int elapsedTime = 0;	// total elapsed time
+	public int numLines = 0;	// number of checkouts
+
+	public Stats(int n) {
+		numLines = n;
+	}
+
+}
