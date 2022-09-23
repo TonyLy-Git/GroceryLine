@@ -1,0 +1,98 @@
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
+
+
+/**
+ * Implements a GroceryLine where every checkout has its own queue.
+ * New customers get into the shortest queue.
+ *
+ */
+public class MultiLine implements GroceryLine {
+	
+	private Stats s;
+	List<Deque<Customer>> lines;	// queues for each checkout
+	
+	public void main(System[] args) {
+		step();
+	}
+	/**
+	 * Initialize all of the checkout lines
+	 * @param numLines The number of queues/checkouts in simulation
+	 */
+	public MultiLine(int numLines) {
+		
+		s = new Stats(numLines);
+		lines = new ArrayList<Deque<Customer>>(); 
+		for (int i = 0; i < numLines; i++) {
+			lines.add(new LinkedList<Customer>());
+		}
+	
+	}
+
+	@Override
+	public void step() {
+		
+		for (int i = 0; i < lines.size(); i++) {
+			if (lines.get(i).size() > s.maxLine)
+				s.maxLine = lines.get(i).size();
+			
+			for (Customer c : lines.get(i))
+				c.tick();
+			
+			if (!lines.get(i).isEmpty()) {
+				if (lines.get(i).peekFirst().done()) {
+					s.totalPeople++;
+					s.totalTime += lines.get(i).peekFirst().getWaitTime();
+					lines.get(i).removeFirst();
+					if (!lines.get(i).isEmpty()) {
+						lines.get(i).peekFirst().startService();
+					}
+					
+				}
+			}
+		}	
+		
+		s.elapsedTime += Simulator.ITEM_TIME;
+		
+	}
+
+	@Override
+	public void arrive(Customer c) {
+		
+		int lineSize = lines.get(0).size();
+		
+		for (int i = 0; i < lines.size(); i++) {
+			if (lines.get(i).size() < lineSize)
+				lineSize = lines.get(i).size();
+		}
+		
+		for (int i = 0; i < lines.size(); i++) {
+			if (lines.get(i).size() == lineSize) {
+				lines.get(i).addLast(c);
+				if (lines.get(i).size() >= 1) {
+					lines.get(i).peekFirst().startService();
+					return;
+				}
+			}
+		}
+	}
+	
+	@Override
+	public boolean hasCustomers() {
+		
+		for (int i = 0; i < lines.size(); i++) {
+			if (!lines.get(i).isEmpty())
+				return true;
+		}
+		return false;
+		
+	}
+
+	@Override
+	public Stats getStats() {
+		
+		return s;
+	}
+}
