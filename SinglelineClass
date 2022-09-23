@@ -1,1 +1,100 @@
+import java.util.Deque;
+import java.util.LinkedList;
 
+/**
+ * Implements a GroceryLine where everyone gets into the same queue
+ * and gets out of the queue when a cashier is available
+ *
+ */
+public class SingleLine implements GroceryLine {
+
+	private Deque<Customer> q;		// single queue
+	private Customer[] checkouts;	// array of checkout spots
+
+	private Stats s;
+
+	/**
+	 * Initialize all of the checkouts and the queue
+	 * @param numLines
+	 */
+	public SingleLine(int numLines) {
+		checkouts = new Customer[numLines];
+		q = new LinkedList<Customer>();
+		s = new Stats(numLines);
+	}
+
+	@Override
+	public void step() {
+		
+		for (int i = 0; i < checkouts.length; i++) {
+			if (checkouts[i] != null) {
+				checkouts[i].tick();
+				if (checkouts[i].done()) {
+					s.totalPeople++;
+					s.totalTime += checkouts[i].getWaitTime();
+					checkouts[i] = null;
+						if (!q.isEmpty()) {
+							checkouts[i] = q.pop();
+							checkouts[i].startService();
+						}
+				}
+	
+			} 
+			else {
+				if (!q.isEmpty()) {
+					checkouts[i] = q.pop();
+					checkouts[i].startService();
+				}
+			}
+			
+		}
+		
+		//update customers in queue
+		for (Customer c : q) {
+			c.tick();
+		}
+		
+		s.elapsedTime += Simulator.ITEM_TIME;
+		
+	}
+
+	@Override
+	public void arrive(Customer c) {
+		
+		boolean added = false;
+		for (int i = 0; i < checkouts.length; i++) {
+			if (checkouts[i] == null) {
+				checkouts[i] = c;
+				checkouts[i].startService();
+				added = true;
+			}
+		}
+		if (!added) {
+			q.add(c);
+			s.maxLine++;
+		}
+		
+		
+	}
+
+	@Override
+	public boolean hasCustomers() {
+		
+		if (q.isEmpty()) {
+			for (int i = 0; i < checkouts.length; i++) {
+				if (checkouts[i] != null)
+					return true;
+			}
+		}
+		return false;
+		
+	}
+
+	@Override
+	public Stats getStats() {
+		
+		return s;
+		
+	}
+
+}
